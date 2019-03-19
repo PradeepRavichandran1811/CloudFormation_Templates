@@ -8,5 +8,5 @@ Resources:
       DBName: myfirstdb
       Engine: MySQL #DB Engine 
       MasterUsername: pradeepravi
-      MasterUserPassword: prady78953
+      MasterUserPassword: ********
   
