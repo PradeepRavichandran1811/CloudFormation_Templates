@@ -1,0 +1,16 @@
+{
+    "Resources":{
+        "EC2":{
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "ImageId": "ami-c481fad3",
+                "InstanceType": "t2.micro",
+                "KeyName": "dock",
+                "Tags":{
+                    "Key": "Name", 
+                    "Value": "template_ec2"
+                }
+            }
+        }
+    }
+}

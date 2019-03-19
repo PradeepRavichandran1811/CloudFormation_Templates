@@ -1,0 +1,11 @@
+Resources:
+  EC2:
+      Type: AWS::EC2::Instance
+      Properties:
+        ImageId: ami-c481fad3 # N.Virginia Region AMI ID
+        InstanceType: t2.micro
+        KeyName: dock #key that is already in use
+        Tags:
+          - 
+            Key: Name 
+            Value: template_ec2
