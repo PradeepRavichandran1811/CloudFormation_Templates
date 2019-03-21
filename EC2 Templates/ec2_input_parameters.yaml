@@ -1,0 +1,68 @@
+Parameters:
+  Name:
+    Description: "The name of the service this stack is used for"
+    Type: String
+  KeyPairName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access into the server
+    Type: AWS::EC2::KeyPair::KeyName
+Mappings:
+  AWSRegionsMap:
+    us-east-1: #N.Virginia
+      AMI: ami-0ff8a91507f77f867
+    us-east-2: #Ohio
+      AMI: ami-0b59bfac6be064b78
+    us-west-1: #N.California
+      AMI: ami-0bdb828fd58c52235
+    us-west-2: #Oregon
+      AMI: ami-a0cfeed8
+    ap-south-1: #Mumbai
+      AMI: ami-0912f71e06545ad88
+    ap-northeast-1: #Tokyo
+      AMI: ami-06cd52961ce9f0d85
+    ap-northeast-2: #Seoul
+      AMI: ami-0a10b2721688ce9d2
+    eu-west-1: #Ireland
+      AMI: ami-047bb4163c506cd98
+    eu-west-2: #London
+      AMI: ami-f976839e
+    eu-west-3: #Paris
+      AMI: ami-0ebc281c20e89ba4b
+    ap-southeast-1: #Singapore
+      AMI: ami-08569b978cc4dfa10
+    ap-southeast-2: #Sydney
+      AMI: ami-09b42976632b27e9b
+    ca-central-1: #Canada
+      AMI: ami-0b18956f
+    cn-north-1: #China, Beijing
+      AMI: ami-0a4eaf6c4454eda75
+    eu-central-1: #Frankfurt
+      AMI: ami-0233214e13e500f77
+Resources:
+  Ec2Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.micro
+      ImageId:
+        Fn::FindInMap:
+        - AWSRegionsMap
+        - !Ref AWS::Region
+        - AMI
+      SecurityGroups: 
+        - !Ref MyNewSecurityGroup
+      Tags:
+        - Key: "Name"
+          Value: !Ref Name
+      KeyName: !Ref KeyPairName
+  MyNewSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH access and HTTP access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0

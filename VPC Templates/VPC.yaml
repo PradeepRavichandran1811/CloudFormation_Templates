@@ -1,0 +1,179 @@
+Parameters:
+  ResourceName:
+    Description: Name of the all Resource being created.
+    Type: String
+  VPCCidrBLOCK: 
+    Description: Enter the CIDR Block for this VPC
+    Type: String
+    Default: 10.60.0.0/16
+  PubS1CIDR:
+    Description: Enter the CIDR Block for the public subnet in the first AZ
+    Type: String
+    Default: 10.60.0.0/24
+  PubS2CIDR:
+    Description: Enter the CIDR Block for the public subnet in the second AZ
+    Type: String
+    Default: 10.60.1.0/24
+  PrivS1CIDR:
+    Description: Enter the CIDR Block for the private subnet in the first AZ
+    Type: String
+    Default: 10.60.10.0/24
+  PrivS2CIDR:
+    Description: Enter the CIDR Block for the private subnet in the second AZ
+    Type: String
+    Default: 10.60.11.0/24
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VPCCidrBLOCK
+      Tags:
+        - Key: Name
+          Value: !Ref ResourceName
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Ref ResourceName
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+  PublicSubnet1: #First public subnet in AZ 1
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ] #selects the first AZ returned from the Intrinsic Function
+      CidrBlock: !Ref PubS1CIDR
+      MapPublicIpOnLaunch: true
+      Tags: 
+        - Key: Name 
+          Value: !Sub ${ResourceName} Public Subnet in AZ1 
+  PublicSubnet2: #Second public subnet in AZ 2
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs '' ] #selects the second AZ returned from the Intrinsic Function
+      CidrBlock: !Ref PubS2CIDR
+      MapPublicIpOnLaunch: true
+      Tags: 
+        - Key: Name 
+          Value: !Sub ${ResourceName} Public Subnet in AZ2 
+  PrivateSubnet1: #First private subnet in AZ 1
+    Type: AWS::EC2::Subnet
+    Properties:
+        VpcId: !Ref VPC
+        AvailabilityZone: !Select [ 0, !GetAZs '' ] 
+        CidrBlock: !Ref PrivS1CIDR
+        MapPublicIpOnLaunch: false
+        Tags: 
+            - Key: Name 
+              Value: !Sub ${ResourceName} Private Subnet in AZ1
+  PrivateSubnet2: #Second private subnet in AZ 2
+    Type: AWS::EC2::Subnet
+    Properties:
+        VpcId: !Ref VPC
+        AvailabilityZone: !Select [ 1, !GetAZs '' ]
+        CidrBlock: !Ref PrivS2CIDR
+        MapPublicIpOnLaunch: false
+        Tags: 
+            - Key: Name 
+              Value: !Sub ${ResourceName} Private Subnet in AZ2
+  NatGateway1EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment #will only be created once IG attachent is created(Dependency)
+    Properties: 
+        Domain: vpc
+  NatGateway2EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+        Domain: vpc
+  NatGateway1: 
+    Type: AWS::EC2::NatGateway
+    Properties: 
+        AllocationId: !GetAtt NatGateway1EIP.AllocationId
+        SubnetId: !Ref PublicSubnet1
+  NatGateway2: 
+    Type: AWS::EC2::NatGateway
+    Properties:
+        AllocationId: !GetAtt NatGateway2EIP.AllocationId
+        SubnetId: !Ref PublicSubnet2
+  PublicRT: #Route Table for Public
+    Type: AWS::EC2::RouteTable
+    Properties: 
+        VpcId: !Ref VPC
+        Tags: 
+            - Key: Name 
+              Value: !Sub ${ResourceName} Public Routes
+  DefaultPublicRoute: 
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties: 
+        RouteTableId: !Ref PublicRT
+        DestinationCidrBlock: 0.0.0.0/0
+        GatewayId: !Ref InternetGateway
+  PublicSubnet1RTAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+        RouteTableId: !Ref PublicRT
+        SubnetId: !Ref PublicSubnet1
+  PublicSubnet2RTAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+        RouteTableId: !Ref PublicRT
+        SubnetId: !Ref PublicSubnet2
+  PrivateRT1: #private route table 1 (for NAT Gateway1)
+    Type: AWS::EC2::RouteTable
+    Properties: 
+        VpcId: !Ref VPC
+        Tags: 
+            - Key: Name 
+              Value: !Sub ${ResourceName} Private Routes (AZ1)
+  DefaultPrivateRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+        RouteTableId: !Ref PrivateRT1
+        DestinationCidrBlock: 0.0.0.0/0
+        NatGatewayId: !Ref NatGateway1
+  PrivateSubnet1RTAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+        RouteTableId: !Ref PrivateRT1
+        SubnetId: !Ref PrivateSubnet1
+  PrivateRT2: #private route table 2 (for NAT Gateway2)
+    Type: AWS::EC2::RouteTable
+    Properties: 
+        VpcId: !Ref VPC
+        Tags: 
+            - Key: Name 
+              Value: !Sub ${ResourceName} Private Routes (AZ2)
+  DefaultPrivateRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+        RouteTableId: !Ref PrivateRT2
+        DestinationCidrBlock: 0.0.0.0/0
+        NatGatewayId: !Ref NatGateway2
+  PrivateSubnet2RTAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+        RouteTableId: !Ref PrivateRT2
+        SubnetId: !Ref PrivateSubnet2
+Outputs: 
+  VPC: 
+      Description: A reference to the created VPC
+      Value: !Ref VPC
+  PublicSubnet1:
+      Description: A reference to the public subnet in the 1st AZ
+      Value: !Ref PublicSubnet1
+  PublicSubnet2: 
+      Description: A reference to the public subnet in the 2nd AZ
+      Value: !Ref PublicSubnet2
+  PrivateSubnet1:
+      Description: A reference to the private subnet in the 1st AZ
+      Value: !Ref PrivateSubnet1
+  PrivateSubnet2: 
+      Description: A reference to the private subnet in the 2nd AZ
+      Value: !Ref PrivateSubnet2
