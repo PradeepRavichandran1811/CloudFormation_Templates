@@ -1,0 +1,61 @@
+Resources:
+  DB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: "CustomerID"
+          AttributeType: "N"
+        - 
+          AttributeName: "CustomerName"
+          AttributeType: "S"
+        - 
+          AttributeName: "Item"
+          AttributeType: "S"
+        - 
+          AttributeName: "ItemQuantity"
+          AttributeType: "N"
+      KeySchema:
+        -
+          AttributeName: "CustomerID"
+          KeyType: "HASH"
+        - 
+          AttributeName: "CustomerName"
+          KeyType: "RANGE"
+      TableName: "AmazonCustomers"
+      ProvisionedThroughput:
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+      GlobalSecondaryIndexes: 
+        - 
+          IndexName: "newGSI"
+          KeySchema: 
+            - 
+              AttributeName: "Item"
+              KeyType: "HASH"
+            - 
+              AttributeName: "ItemQuantity"
+              KeyType: "RANGE"
+          Projection: 
+            NonKeyAttributes: 
+              - "CustomerID"
+              - "CustomerName"
+            ProjectionType: "INCLUDE"
+          ProvisionedThroughput: 
+            ReadCapacityUnits: "5"
+            WriteCapacityUnits: "5"
+      LocalSecondaryIndexes: 
+        - 
+          IndexName: "newLSI"
+          KeySchema: 
+            - 
+              AttributeName: "CustomerID"
+              KeyType: "HASH"
+            - 
+              AttributeName: "Item"
+              KeyType: "RANGE"
+          Projection: 
+            NonKeyAttributes: 
+              - "CustomerName"
+              - "ItemQuantity"
+            ProjectionType: "INCLUDE"

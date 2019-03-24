@@ -1,0 +1,16 @@
+Resources:
+  DB:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: "CustomerID"
+          AttributeType: "N"
+      KeySchema:
+        -
+          AttributeName: "CustomerID"
+          KeyType: "HASH"
+      TableName: "Customers"
+      ProvisionedThroughput:
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
