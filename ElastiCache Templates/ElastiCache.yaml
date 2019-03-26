@@ -1,0 +1,23 @@
+Resources:
+  ElasticacheSecGrp:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Security Group for AWS ElastiCache"
+      SecurityGroupIngress:
+        -
+          IpProtocol: "tcp"
+          FromPort: "11211" #default port for memcached
+          ToPort: "11211"
+  CacheCluster:
+    Type: AWS::ElastiCache::CacheCluster
+    Properties:
+      AutoMinorVersionUpgrade: "true"
+      ClusterName: "MyCache"
+      Engine: "memcached" #memcached or redis
+      CacheNodeType: "cache.t2.micro"
+      NumCacheNodes: "1"
+      VpcSecurityGroupIds:
+        -
+          Fn::GetAtt:
+            - "ElasticacheSecGrp"
+            - "GroupId"
